@@ -7,13 +7,18 @@ export async function POST(req: Request) {
     const body = await req.json();
     validateLogin(body);
 
-    const { token, user } = await AuthService.login(body.email, body.password);
+    const { accessToken, refreshToken , user } = await AuthService.login(
+      body.email,
+      body.password
+    );
 
     return NextResponse.json({
       message: "Login berhasil",
-      token,
+      refreshToken,
+      token: accessToken,
       user,
     });
+
   } catch (error: any) {
     return NextResponse.json({ message: error.message }, { status: 401 });
   }

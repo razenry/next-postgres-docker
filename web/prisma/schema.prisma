@@ -14,17 +14,144 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+  id             Int     @id @default(autoincrement())
+  name           String
+  username       String  @unique
+  email          String  @unique
+  password       String
+  profilePicture String? @map("profile_picture")
+
+  ratings  UserBookRating[]
+  wishlist UserBookWishlist[]
+  comments Comment[]
+  refreshTokens RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
 }
 
-model Post {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean @default(false)
-  authorId  Int
-  author    User    @relation(fields: [authorId], references: [id])
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int      @map("user_id")
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+
+model Category {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  displayName String  @map("display_name")
+  isActive    Boolean @default(true) @map("is_active")
+
+  books Book[]
+
+  @@map("categories")
+}
+
+model Genre {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  displayName String  @map("display_name")
+  isActive    Boolean @default(true) @map("is_active")
+
+  books BookGenre[]
+
+  @@map("genres")
+}
+
+model Book {
+  id          Int     @id @default(autoincrement())
+  title       String
+  author      String
+  publisher   String?
+  description String?
+  coverImage  String  @map("cover_image")
+  bookUrl     String  @map("book_url")
+
+  categoryId Int      @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  isActive Boolean @default(true) @map("is_active")
+
+  genres   BookGenre[]
+  ratings  UserBookRating[]
+  wishlist UserBookWishlist[]
+  comments Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("books")
+}
+
+model BookGenre {
+  id      Int @id @default(autoincrement())
+  bookId  Int @map("book_id")
+  genreId Int @map("genre_id")
+
+  book  Book  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, genreId])
+  @@map("book_genres")
+}
+
+model UserBookRating {
+  id     Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  bookId Int @map("book_id")
+  rating Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, bookId])
+  @@map("user_book_ratings")
+}
+
+model UserBookWishlist {
+  id     Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  bookId Int @map("book_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, bookId])
+  @@map("user_book_wishlists")
+}
+
+//////////////////////
+// COMMENT (NESTED)
+//////////////////////
+model Comment {
+  id       Int    @id @default(autoincrement())
+  userId   Int    @map("user_id")
+  bookId   Int    @map("book_id")
+  comment  String
+  parentId Int?   @map("parent_comment_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  parent  Comment?  @relation("CommentToComment", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentToComment")
+
+  createdAt DateTime @default(now())
+
+  @@map("comments")
 }

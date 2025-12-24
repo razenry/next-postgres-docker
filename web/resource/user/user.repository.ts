@@ -1,29 +1,45 @@
 import prisma from "@/lib/prisma";
 
 export class UserRepository {
-  static findAll() {
-    return prisma.user.findMany({
-      include: { posts: true },
-    });
-  }
-
-  static findById(id: number) {
-    return prisma.user.findUnique({
-      where: { id },
-    });
-  }
-
   static findByEmail(email: string) {
     return prisma.user.findUnique({
       where: { email },
     });
   }
 
-  static create(data: { email: string; name?: string }) {
-    return prisma.user.create({ data });
+  static findById(id: number) {
+    return prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        username: true,
+        profilePicture: true,
+      },
+    });
   }
 
-  static delete(id: number) {
-    return prisma.user.delete({ where: { id } });
+  static findByUsername(username: string) {
+    return prisma.user.findUnique({
+      where: { username },
+    });
+  }
+
+  static create(data: {
+    name: string;
+    username: string;
+    email: string;
+    password: string;
+  }) {
+    return prisma.user.create({
+      data,
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        email: true,
+      },
+    });
   }
 }
